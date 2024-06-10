@@ -64,6 +64,18 @@ struct Complex {
             temp.b = b + c.b;
             return temp;
         }
+        // Constructor Overloading is Similar to Function Overloading, The name is same, only the parameters differ
+        // Default Constructor
+        Complex () {
+            a = 0; b = 0;
+        }
+        // Parameterized Constructor
+        Complex (int x, int y) {
+            a = x; b = y;
+        }
+        Complex (int k) {
+            a = k;
+        }
 };
 // For this function to be a member. It needs:
 // Same return type, name and the membership label
@@ -132,11 +144,39 @@ Answer => No, since when there is no object created, one can only change the sta
         Since instance member functions need an instance/object to act upon.
 */
 
+/*
+Constructor:
+=> Constructor is a member function of a class
+=> Name of Constructor should be the same as the name of the class
+=> It has no return type, so can't use return keyword
+=> It must be an instance member function, that is, it can never be static
 
+How to call Constructor?
+=> Constructor is implicitly invoked when an object is created
+=> Constructor is used to solve problem of initialization
+
+Why it is called Constructor?
+=> Because it CONSTRUCTS an object. How ?
+The thing is when an object is created of a class, it's member variables contain garbage values.
+Thus it does not map/represent with anything yet. So if we do not initialize it's values and start calling different utility functions, it fails
+Thus Constructor solves this problem of initialization and makes an Object a OBJECT.
+
+Types of Constructors:
+Default Contructor:
+The Compiler supplies us with a default constructor, which accepts no parameter
+If we create even one constructor on our own, then this default constructor does not work (We have to create the default constructor as well)
+Parameterized Constructor:
+Accepts Parameters in the constructor function
+
+Constructor Overloading:
+
+*/
 
 int main () {
     // c1 is an Object (Not a variable)    
-    Complex c1, c2, c3; 
+    Complex c1(3, 5), c2(6), c3 = 6; 
+    // Another Syntax can be
+    Complex c4 = Complex(1, 2);
     // c1 is the caller object, rest is member function
     c3 = c1.add(c2);
     c1.set_data(3, 4);

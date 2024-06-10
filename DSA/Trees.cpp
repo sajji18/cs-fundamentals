@@ -855,8 +855,164 @@ TreeNode* buildTree(vector<int>& inorder, vector<int>& postorder) {
 }
 
 /*
-
+Serialize and Deserialize a Binary Tree
+Logic:
+    Serializer : Convert the Tree into a string like 1, 2, 3, #, #, 4, 5 Using A level Order Traversal
+    DeSerializer : Iterate over this string as objects using stringstream
+    Use a Level Order Traversal and if (the left child is not '#', then set it as left child)
+    If the right child is not '#', set it as right child 
+    Finally return the Root (All changes will be by reference, so pass a copy of root into the queue and set its children (of the copy))
+    TC => O(N), SC => O(N)
 */
+string serialize(TreeNode* root) {
+    // Create String Like 1, 2, 3, #, #, 4, 5 Using A level Order Traversal
+    if (root == NULL) return "";
+    string s = "";
+    queue <TreeNode*> q;
+    q.push(root);
+    while (!q.empty()) {
+        auto front = q.front();
+        q.pop();
+        if (front == NULL) s.append("#,");
+        else s.append(to_string(front -> data) + ',');
+        if (front != NULL) {
+            q.push(front -> left);
+            q.push(front -> right);
+        }
+    }
+    return s;
+}
+TreeNode* deserialize(string &data) {
+    if (!data.length()) return nullptr;
+    // Read About this, very useful thing
+    stringstream s(data); // Treats the given string as an iterable object
+
+    string str;
+    getline(s, str, ',');
+
+    TreeNode* root = new TreeNode(stoi(str));
+    queue <TreeNode*> q;
+    q.push(root);
+    while (!q.empty()) {
+        // Current Node under Consideration
+        auto front = q.front();        
+        q.pop();
+        getline(s, str, ','); // Left Child
+        if (str == "#") {
+            front -> left = NULL;
+        }
+        else {
+            front -> left = new TreeNode(stoi(str));
+            q.push(front -> left);
+        }
+        getline(s, str, ','); // Right Child
+        if (str == "#") {
+            front -> right = NULL;
+        }
+        else {
+            front -> right = new TreeNode(stoi(str));
+            q.push(front -> right);
+        }
+    }
+    return root; // All changes were by Reference
+}
+
+/*
+Morris Inorder Traversal of a Binary Tree
+Logic:
+    If the curr node's left child is null, print curr then move to right
+    If the curr node's left child is non null, first find the rightmost node from the subtree with the left child as root
+    If this rightmost node is null, set it as curr node as this will allow us to make to reverse path to move up the tree
+    If this rightmost node is non null, means we came to the curr node via the reverse path, thus set that path as null, print curr node and move right
+    TC => O(N + N), SC => O(1)
+*/
+vector<int> morrisInorderTraversal(TreeNode* root) {
+    vector <int> ans;
+    TreeNode* curr = root;
+    while (curr != NULL) {
+        if (curr -> left == NULL) {
+            ans.push_back(curr -> data);
+            curr = curr -> right;
+        }
+        else {
+            TreeNode* prev = curr -> left;
+            while (prev -> right != NULL && prev -> right != curr) {
+                prev = prev -> right;
+            }
+            if (prev -> right == NULL) {
+                prev -> right = curr;
+                curr = curr -> left;
+            }
+            else {
+                prev -> right = NULL;
+                ans.push_back(curr -> data); // For InOrder Traversal
+                curr = curr -> right;
+            }
+        }
+    }
+    return ans;           
+}
+
+vector<int> morrisPreorderTraversal(TreeNode* root) {
+    vector <int> ans;
+    TreeNode* curr = root;
+    while (curr != NULL) {
+        if (curr -> left == NULL) {
+            ans.push_back(curr -> data);
+            curr = curr -> right;
+        }
+        else {
+            TreeNode* prev = curr -> left;
+            while (prev -> right != NULL && prev -> right != curr) {
+                prev = prev -> right;
+            }
+            if (prev -> right == NULL) {
+                prev -> right = curr;
+                ans.push_back(curr -> data); // For preOrder Traversal
+                curr = curr -> left;
+            }
+            else {
+                prev -> right = NULL;
+                curr = curr -> right;
+            }
+        }
+    }
+    return ans;           
+}
+
+/*
+Flatten Binary Tree to a Linked List
+Logic:
+    Approach 1:
+    Recursive Traversal
+    Approach 2:
+    Iterative Traversal
+    Since We are following the preorder traversal, create a data structure (preferably a Stack)
+    While traversing through the stack, take top element / Node, insert first its right child and then left child
+    Now If stack is not empty, set the right child of the curr node as the top element of stack and left child of curr node as null
+    TC => O(N), SC => O(N)
+    Approach 3:
+    Morris Traversal
+*/
+void flatten(TreeNode* root) {
+        if (root == nullptr) return;
+        stack <TreeNode*> stk;
+        stk.push(root);
+        while (!stk.empty()) {
+            TreeNode* top = stk.top();
+            stk.pop();
+            if (top -> right != nullptr) {
+                stk.push(top -> right);
+            }
+            if (top -> left != nullptr) {
+                stk.push(top -> left);
+            }
+            if (!stk.empty()) {
+                top -> right = stk.top();
+            }
+            top -> left = nullptr;
+        }
+    }
 
 ll M = 1e9 + 7;
 ll n, m, k, x, y, z, p, q;
