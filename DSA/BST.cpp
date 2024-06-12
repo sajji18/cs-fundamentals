@@ -444,6 +444,89 @@ bool checkSumPairKOptimiza (TreeNode* root, int k) {
     return false;
 }
 
+/*
+Recover Binary Search Tree (Exactly Two Nodes Swapped by Mistake)
+Logic:
+    Brute Force:
+    Do any Traversal over the tree and sort it => We get inorder traversal for a BST
+    Now do inorder traversal for the given BST, if any Node differs from the list which you created, change that value
+    Finally return the root
+    TC => O(N) + O(Nlog(N)), SC => O(N)
+    Optimized:
+    We observe in inorder traversal, there will exactly be 2 elements swapped, either adjancent or non adjacent
+    if adjacent : first, middle. If not adjacent : first, middle, last will be considered.
+    Do an Inorder Traversal, keeping track of three values, prev, first, middle, last
+    When we come across a node with value less than prev, make first = prev and middle = node
+    If We for the second time come across node with value less than prev, make last = node
+    Swap Accordingly, based on adjacent or non adjacent. Do dry runs for better clarity
+    TC => O(N), SC => O(Height of Tree) {Space complexity can be omitted using Morris Traversal}
+*/
+class Solution {
+    TreeNode* prev;
+    TreeNode* first;
+    TreeNode* middle;
+    TreeNode* last;
+public:
+    void inorder (TreeNode* root) {
+        if (root == NULL) return;
+        inorder(root -> left);
+        if (prev != NULL && root -> data < prev -> data) {
+            if (first == NULL) {
+                first = prev;
+                middle = root;
+            }
+            else last = root;
+        }
+        prev = root;
+        inorder(root -> right);
+    }
+    void recoverTree(TreeNode* root) {
+        first = middle = last = NULL;
+        prev = new TreeNode(INT_MIN);
+        inorder(root);
+        if (first && last) swap(first -> data, last -> data);
+        else if (first && middle) swap(first -> data, middle -> data);
+    }
+};
+
+/*
+Find the largest BST Subtree with a Binary Search Tree
+Logic:
+    Brute Force:
+    Use any Traversal, and for each node call the function validate BST which checks if given tree is BST or not
+    TC => O(N) * O(N), SC => O(1)
+    Optimized:
+    Create A New Data Type NodeValue => which contains minValue, maxValue, size
+    For any Node N, if the maxValue of its L subtree is < N Value and if the minValue of its R subtree is > N value
+    If Above condition is valid, Return NodeValue(min(left.maxValue, node->data), max(right.minValue, node->data), left.maxSize + right.maxSize + 1)
+    Else Return NodeValue(INT_MIN, INT_MAX, max(left.maxSize, right.maxSize)) So that Above condition will never hold true now and cannot increase size
+    TC => O(N), SC => O(1)
+*/
+class NodeValue {
+public:
+    int minValue, maxValue, maxSize;
+    NodeValue (int minValue, int maxValue, int maxSize) {
+        this -> minValue = minValue;
+        this -> maxValue = maxValue;
+        this -> maxSize = maxSize;
+    }
+};
+class Solution{
+    public:
+    NodeValue largestBstSubtreeHelper (TreeNode* root) {
+        if (root == NULL) return NodeValue(INT_MAX, INT_MIN, 0);
+        auto left = largestBstSubtreeHelper(root -> left);
+        auto right = largestBstSubtreeHelper(root -> right);
+        if (left.maxValue < root -> data && right.minValue > root -> data) {
+            return NodeValue(min(left.minValue, root -> data), max(right.maxValue, root -> data), left.maxSize + right.maxSize + 1);
+        }
+        else return NodeValue(INT_MIN, INT_MAX, max(left.maxSize, right.maxSize));
+    }
+    int largestBst(TreeNode *root) {
+        return largestBstSubtreeHelper(root).maxSize;
+    }
+};
+
 ll M = 1e9 + 7;
 ll n, m, k, x, y, z, p, q;
 
