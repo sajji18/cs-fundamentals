@@ -120,6 +120,10 @@ Components in a Graph:
 => In this case, the graph is basically broken into pieces called components
 */
 
+
+/* ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
 /*
 Breadth First Search in a Graph (BFS):
 Logic:
@@ -751,6 +755,10 @@ bool isCyclic (int V, vector <int> adj[]) {
     return false;
 }
 
+
+/* ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+
 /*
 Topological Sorting Using DFS:
 This type of sorting only exist on DAG (Directed Acyclic Graphs)
@@ -957,6 +965,444 @@ string findOrder(string dict[], int N, int K) {
     }
     return ans;
 }
+
+/* ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- */
+
+/*
+Shortest Path From Source to All Nodes in a Weighted Directed Acyclic Graph (DAG):
+This problem can be solved by a normal bfs of the topological sorted order of the nodes
+This only works if in the topological sorted order, source node appears at the beginning (Top of Stack (LIFO))
+Logic:
+    Construct Graph with Weights
+    Find the TopoSort Order using BFS (Kahn's Indegree Algorithm) or DFS (Push a Node in Stack after DFS of its neighbour is complete)
+    Maintain a distance array to store the minimum distance
+    Iterate over stack, take top element and pop
+    Iterate over this elements neighbours: If the shortestDistance[element] + weight[edge b/w element & neighbour] < shortestDistance[neighbour], then update
+    Keep doing this until stack is not empty
+    Intution: Basically Shortest Distance for a Node = Shortest Distance of its parents + min(weights of all edge b/w this node and its parents)
+    TC => O(N + E), SC => O(N) + O(N) + O(N) + O(N) {visited array, recursive auxiliary stack, stack, dist array}
+*/
+void dfs (int node, vector <pair<int, int>> adj[], int vis[], stack <int> &stk) {
+    // Entering Node
+    vis[node] = 1;
+    for (auto it : adj[node]) {
+        if (!vis[it.first]) {
+            dfs(it.first, adj, vis, stk);
+        }
+    }
+    // Exiting Node
+    stk.push(node);
+}
+vector<int> shortestPath(int N,int M, vector<vector<int>>& edges){
+    // Shortest Path in DAG using Topological sort works only if the source is cannot be reached via any other node
+    // Create Graph
+    vector <pair<int, int>> adj[N];
+    for (auto it : edges) {
+        int u = it[0];
+        int v = it[1];
+        int wt = it[2];
+        adj[u].push_back({ v, wt });
+    }
+    // Store TopoSort order in stack
+    int vis[N] = {0};
+    stack <int> stk;
+    for (int i = 0; i < N; i++) {
+        if (!vis[i]) {
+            dfs(i, adj, vis, stk);
+        }
+    }
+    // Store Distances using TopoSort Stack
+    // Assuming the source is not child of any node
+    vector <int> dist(N, 1e9);
+    dist[0] = 0;
+    while (!stk.empty()) {
+        int top = stk.top();
+        stk.pop();
+        for (auto it : adj[top]) {
+            if (dist[top] + it.second < dist[it.first]) {
+                dist[it.first] = dist[top] + it.second;
+            }
+        }
+    }
+    for (auto &it : dist) {
+        if (it == 1e9) it = -1;
+    }
+    return dist;
+}
+
+/*
+Shortest Path in Undirected Graph with Unit Weights
+Given A Source, find the shortest distance of this source to all the points in a vector (-1 if not reachable)
+Logic:
+    Normal BFS Algorithm, start from source: As we go to neighbours distance increase by 1.
+    Maintain a Distance Array which keeps track of the Minimum distance
+    TC => O(N + 2 * E), SC => O(N)
+*/
+vector<int> shortestPath(vector<vector<int>>& edges, int N,int M, int src){
+    vector <int> adj[N];
+    for (auto it : edges) {
+        adj[it[0]].push_back(it[1]);
+        adj[it[1]].push_back(it[0]);
+    }
+    int dist[N];
+    for (int i = 0; i < N; i++) dist[i] = 1e9;
+    dist[src] = 0;
+    queue <int> q;
+    q.push(src);
+    while (!q.empty()) {
+        int front = q.front();
+        q.pop();
+        for (auto it : adj[front]) {
+            if (dist[it] > 1 + dist[front]) {
+                dist[it] = 1 + dist[front];
+                q.push(it);
+            }
+        }
+    }
+    vector <int> ans(N, -1);
+    for (int i = 0; i < N; i++) {
+        if (dist[i] != 1e9) ans[i] = dist[i];
+    }
+    return ans;
+}
+
+
+/*
+Dijkstra Algorithm:
+Function to find the shortest distance of all the vertices from the source vertex S
+Only Types of Graph where it does not work is graphs with negative weights
+TC => O(N * log(V)) {Very Important}
+*/
+// Using Priority Queue
+vector <int> dijkstra(int V, vector<vector<int>> adj[], int S) {
+    // Store {distance, node} in priority queue
+    priority_queue <pair <int, int>, vector <pair <int, int>>, greater <pair <int, int>>> pq;
+    vector <int> dist(V, 1e9);
+    // Distance to source S is 0
+    dist[S] = 0;
+    pq.push({ 0, S });
+    // BFS
+    while (!pq.empty()) {
+        int distance = pq.top().first;
+        int node = pq.top().second;
+        pq.pop();
+        // Checking Shortest Distance for neighbours
+        for (auto it : adj[node]) {
+            int adjNode = it[0];
+            int edgeWeight = it[1];
+            if (distance + edgeWeight < dist[adjNode]) {
+                dist[adjNode] = distance + edgeWeight;
+                pq.push({ dist[adjNode], adjNode });
+            }
+        }
+    }
+    return dist;
+}
+// Using Set, Only Benefit is that If someone visited a Node earlier and Gave a Worse distance
+// We can erase that distance once we visit that node again with a better distance
+vector <int> dijkstra(int V, vector<vector<int>> adj[], int S) {
+    // Store {distance, node} in set
+    set <pair <int, int>> st;
+    vector <int> dist(V, 1e9);
+    // Distance to source S is 0
+    st.insert({ 0, S });
+    dist[S] = 0;
+    // BFS Like Traversal
+    while (!st.empty()) {
+        auto it = *(st.begin());
+        int node = it.second;
+        int dis = it.first;
+        st.erase(it);
+        // Finding shortest Path to neighbours
+        for (auto it : adj[node]) {
+            int adjNode = it[0];
+            int edgeWeight = it[1];
+            
+            if (dis + edgeWeight < dist[adjNode]) {
+                // If Worse Distance already present
+                if (dist[adjNode] != 1e9) {
+                    // erase it since we found better
+                    st.erase({ dist[adjNode], adjNode });
+                }
+                // Update this better distance
+                dist[adjNode] = dis + edgeWeight;
+                st.insert({ dist[adjNode], adjNode });
+            }
+        }
+    }
+    return dist;
+}
+
+/*
+In Dijkstra's Algorithm
+Question) Why do we consider Priority Queue / Set instead of a Queue ?
+Answer => If we use queue, it is brute force (Using dry runs we find out, using queues will lead us to explore all possible paths)
+        But when we use priority queue or set, we are greedily first only exploring the minimum distance paths and then proceed
+
+Time Complexity Derivation:
+TC = O(V * (Pop Vertex from Min Heap + No. of edges on each vertex * Pust into Min Heap))
+TC = O(V * (log(Heap Size) + ne * log(Heap Size)))
+TC = O(V * (log(Heap Size) * (1 + ne))) {But ne = V - 1 (In the worst case, all vertex connected to every other vertex)}
+TC = O(V * V * log(Heap Size))
+TC = O(V^2 * log(Heap Size)) {Worse case Heap size = V^2}
+TC = O(V^2 * 2 * log(V)) {V^2 ~= Edges E}
+TC = O(E * 2 * log(V)) = O(E * log(V))
+*/
+
+/*
+Print the Shortest Path from 1 to N in a Weighted Graph:
+Logic:
+    Use the standard Dijkstra's Algorithm
+    Maintain a parent array to keep track of the parents of the nodes (From where did we come from to reach Node N)
+    Finally Backtrack to find the given path
+    TC => O(N) + O(E * log(V))
+*/
+vector <int> printShortestPath (int n, int m, vector <vector <int>> &edges) {
+    // Construct weighted graph
+    vector <pair<int, int>> adj[n + 1];
+    for (auto it : edges) {
+        adj[it[0]].push_back({ it[1], it[2] });
+        adj[it[1]].push_back({ it[0], it[2] });
+    }
+    // Mark Parents
+    int parent[n + 1];
+    for (int i = 1; i <= n; i++) parent[i] = i;
+    // Dijkstra (Create Priority Queue with {distance, node})
+    vector <int> dist(n + 1, 1e9);
+    priority_queue <pair<int, int>, vector<pair <int, int>>, greater<pair<int, int>>> pq;
+    pq.push({ 0, 1 });
+    dist[1] = 0;
+    while (!pq.empty()) {
+        auto node = pq.top().second;
+        auto dis = pq.top().first;
+        pq.pop();
+        for (auto it : adj[node]) {
+            auto adjNode = it.first;
+            auto edgeWeight = it.second;
+            if (dis + edgeWeight < dist[adjNode]) {
+                dist[adjNode] = dis + edgeWeight;
+                pq.push({ dist[adjNode], adjNode });
+                parent[adjNode] = node;
+            }
+        }
+    }
+    // Path Not Found
+    if (dist[n] == 1e9) return {-1};
+    // Backtrack to get Path
+    vector <int> ans;
+    int node = n;
+    while (parent[node] != node) {
+        ans.push_back(node);
+        node = parent[node];
+    }
+    ans.push_back(1);
+    reverse(ans.begin(), ans.end());
+    return ans;
+}
+
+/*
+Path with Minimum Effort:
+Return the minimum effort of all of the paths from (0, 0) to (n - 1, m - 1) of a grid of heights
+Effort is the maximum absolute difference of adjacent heights in a path
+Logic:
+    This problem can be solved using Dijkstra or BFS
+    When Using dijkstra, we sort of keep a dp array (Memoization) to keep track of minimum efforts of all paths at a point (x, y
+    Means dp[x, y] = min(dp[x, y], max(dp[x + i, y + j], abs(heights[x + i][y + j] - heights[x][y]))) for all i = {-1, 0, +1, 0} and j = {0, +1, 0, -1} corresponding pairs
+*/
+int minimumEffortPath(vector<vector<int>>& heights) {
+    int n = heights.size();
+    int m = heights.front().size();
+    // Maintaining a Queue Data Structure
+    priority_queue <pair<int, pair<int, int>>, vector<pair<int, pair<int, int>>>, greater<pair<int, pair<int, int>>>> q;
+    vector <vector <int>> dp(n, vector <int> (m, 1e9));
+    q.push({ 0, { 0, 0 } });
+    dp[0][0] = 0;
+    int dr[] = {-1, 0, +1, 0};
+    int dc[] = {0, +1, 0 , -1};
+    while (!q.empty()) {
+        auto curr = q.top().first;
+        auto r = q.top().second.first;
+        auto c = q.top().second.second;
+        q.pop();
+        if (r == n - 1 && c == m - 1) return curr;
+        for (int i = 0; i < 4; i++) {
+            int newr = r + dr[i];
+            int newc = c + dc[i];
+            if (newr >= 0 && newr < n && newc >= 0 && newc < m && dp[newr][newc] > max(curr, abs(heights[r][c] - heights[newr][newc]))) {
+                dp[newr][newc] = min(dp[newr][newc], max(dp[r][c], abs(heights[r][c] - heights[newr][newc])));
+                q.push({ dp[newr][newc], {newr, newc} });
+            }
+        }
+    }
+    return dp[n - 1][m - 1];
+}
+
+/*
+Cheapest Flight with At most K stops
+Reach from source S to destination D, using minimum cost as well as within stop limit (Number of times vertex change)
+Logic:
+    One Might think this can be solved with Dijkstra... Game Over (No it cannot)
+    The thing is Dijkstra always uses a Priority Queue, So we will always find the shortest Path. But it is not manadatory that it will be within the stop limit
+    And Dijkstra will not even allow a costlier path to store itself even if it is within the stop limit, and cheaper path is out of stop limit
+    Therefore we maintain a Queue with {stops, {node, cost}} and do a level order traversal (Based on stops)
+    And push nodes min path nodes into the queue (ONLY IF THEY ARE WITHIN STOP LIMIT)
+    TC => O(N) {Normal BFS}
+*/ 
+int findCheapestPrice(int n, vector<vector<int>>& flights, int src, int dst, int k) {
+    // Creating Graph
+    vector <pair <int, int>> adj[n];
+    for (auto it : flights) {
+        adj[it[0]].push_back({ it[1], it[2] });
+    }
+    // Dp Array to Store Min Cost to Reach that Node
+    vector <int> dp(n, 1e9);
+    dp[src] = 0;
+    // Dijkstra's Algorith
+    queue <pair<int, pair<int, int>>> pq;
+    pq.push({ 0, { src, 0 }});
+    // Heres the catch, we need to store {stops, {node, distance}} and Not {distance, {node, stops}} since stops are more important than this problem. Rest same
+    while (!pq.empty()) {
+        auto node = pq.front().second.first;
+        auto cost = pq.front().second.second;
+        auto stops = pq.front().first;
+        pq.pop();
+        if (stops > k) break;
+        for (auto it : adj[node]) {
+            int adjNode = it.first;
+            int edgeWeight = it.second;
+            if (dp[adjNode] > cost + edgeWeight && stops <= k) {
+                dp[adjNode] = cost + edgeWeight;
+                pq.push({ stops + 1, {adjNode, cost + edgeWeight} });
+            }
+        }
+    }
+    if (dp[dst] == 1e9) return -1;
+    else return dp[dst];
+}
+
+/*
+Network Delay Time:
+Given A Directed Graph with Weights equal to Time
+Find the minimum time to reach signal from source node to all nodes
+Logic:
+    Find the Shortest Path / Time for each node from the given source
+    The maximum of these shortest times will be time when all nodes will get notified of the messafe
+*/
+int networkDelayTime(vector<vector<int>>& times, int n, int k) {
+    // Create Graph
+    vector <pair <int, int>> adj[n + 1];
+    for (auto it : times) {
+        adj[it[0]].push_back({it[1], it[2]});
+    }
+    // Maintain a dp array, dp[i] = Minimum time to receive Message from source k
+    vector <int> dp(n + 1, 1e9);
+    dp[k] = 0;
+    // Dijkstra to find the shortest path to all the nodes (time, node)
+    priority_queue <pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    pq.push({ 0, k });
+    while (!pq.empty()) {
+        auto it = pq.top();
+        pq.pop();
+        auto time = it.first;
+        auto node = it.second;
+        for (auto it : adj[node]) {
+            int adjNode = it.first;
+            int edgeW = it.second;
+            if (time + edgeW < dp[adjNode]) {
+                dp[adjNode] = time + edgeW;
+                pq.push({ dp[adjNode], adjNode });
+            }
+        }
+    }
+    int res = INT_MIN;
+    for (int i = 1; i <= n; i++) res = max(res, dp[i]);
+    if (res == 1e9) return -1;
+    else return res;
+}
+
+/*
+Minimum Multiplications to reach End:
+Given Start Number, End Number and Array of Multipliers
+Return the minimum number of steps to reach from start number to end number using multiplications from the array multipliers any number of time
+Logic:
+    We observe that this is like a graph, and we need to find the shortest number of steps (BFS OFcourse!!!!!!!!!)
+    TC => O(100000 * N) {Very Unlikely, Expected to be much lower than this}
+*/
+int minimumMultiplications(vector<int>& arr, int start, int end) {
+    // Edge Case
+    if (start == end) return 0;
+    // Store {value, steps}
+    queue <pair<int, int>> q;
+    vector <int> dp(100000, 1e9);
+    q.push({ start, 0 });
+    dp[start] = 0;
+    while (!q.empty()) {
+        auto node = q.front().first;
+        auto steps = q.front().second;
+        q.pop();
+        for (auto it : arr) {
+            int num = (node * it) % 100000;
+            if (dp[num] > steps + 1) {
+                q.push({ num, steps + 1 });
+                if (num == end) return steps + 1;
+                dp[num] = steps + 1;
+            }
+        }
+    }
+    return -1;
+}
+
+/*
+Number of shortest paths to arrive at destination
+Logic:
+    Dijkstra + DP (Storing the number of ways)
+    lets say if all weights of paths are same then: dp[node] = dp[child1] + dp[child2] + ...
+    Else if a new path with less weight is found: dp[node] = dp[child]
+    TC => O(E * log(V)), SC => O(N)
+*/
+int countPaths(int n, vector<vector<int>>& roads) {
+    // Create Graph
+    vector <pair<long long, long long>> adj[n];
+    for (auto it : roads) {
+        adj[it[0]].push_back({ it[1], it[2] });
+        adj[it[1]].push_back({ it[0], it[2] });
+    }
+    // Dp Array to store ways and distance array to keep track of minimum distance
+    vector <long long> dp(n, 0);
+    vector <long long> dist(n, LONG_MAX);
+    dp[0] = 1;
+    dist[0] = 0;
+    // Dijkstra
+    priority_queue <pair<long long, long long>, vector<pair<long long, long long>>, greater<pair<long long, long long>>> pq;
+    pq.push({ 0, 0 });
+    while (!pq.empty()) {
+        long long node = pq.top().second;
+        long long dis = pq.top().first;
+        pq.pop();
+        for (auto it : adj[node]) {
+            long long adjNode = it.first;
+            long long edgeW = it.second;
+            // This is the first time i am coming to this node with a shorter distance
+            if (dis + edgeW < dist[adjNode]) {
+                pq.push({ dis + edgeW, adjNode });
+                dist[adjNode] = dis + edgeW;
+                dp[adjNode] = (dp[node]) % 1000000007;
+            }
+            else if (dis + edgeW == dist[adjNode]) {
+                dp[adjNode] = (dp[adjNode] + dp[node]) % 1000000007;
+            }
+        }
+    }
+    return dp[n - 1] % 1000000007;
+}
+
+/*
+BELLMAN FORD ALGORITHM
+*/
+
+/*
+FLOYD MARSHALL ALGORITHM
+*/
 
 ll M = 1e9 + 7;
 ll n, m, k, x, y, z, p, q;
