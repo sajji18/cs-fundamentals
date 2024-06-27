@@ -1397,11 +1397,137 @@ int countPaths(int n, vector<vector<int>>& roads) {
 }
 
 /*
-BELLMAN FORD ALGORITHM
+BELLMAN FORD ALGORITHM:
+=> Similar to Dijkstra, it is also an Algorithm for finding the shortest path from source to all nodes
+=> Only Difference - It works for graphs with negative weights as well
+=> It only works for directed graph (If graph if undirected, make it double directed
+=> TC => O(V * E)
+Algorithm:
+    Relax all the edges, N - 1 times (Assuming N Vertex)
+    Relaxation of Edge:
+        If there is an edge from u to v
+        Relaxation means if (dist[u] + edgeWeight < dist[v]) dist[v] = dist[u] + edgeWeight
+    To Check if graph contains a Negative Cycle:
+        Relax all the edges the Nth time (1 More Relaxation)
+        If any distance still update, then negative cycle is Present
+        Proof : Basically, for any graph, we require at Most N - 1 Relaxations to find shortest distance for all the nodes
+                The only case of distance updating the Nth time, will be if negative cycles are present
+*/
+vector<int> bellman_ford(int V, vector<vector<int>>& edges, int S) {
+    vector <int> dist(V, 1e8);
+    dist[S] = 0;
+    // Relaxing Edges V - 1 Times
+    for (int i = 0; i < V - 1; i++) {
+        for (auto it : edges) {
+            int u = it[0];
+            int v = it[1];
+            int wt = it[2];
+            if (dist[u] != 1e8 && dist[u] + wt < dist[v]) {
+                dist[v] = dist[u] + wt;
+            }
+        }
+    }
+    // Nth Relaxation to Check Negative Cycle
+    for (auto it : edges) {
+        int u = it[0];
+        int v = it[1];
+        int wt = it[2];
+        if (dist[u] != 1e8 && dist[u] + wt < dist[v]) {
+            return {-1};
+        }
+    }
+    // If No Negative Cycle found, return the shortest distance array
+    return dist;
+}
+
+/*
+FLOYD MARSHALL ALGORITHM:
+=> It is used to find the the shortest Path from every node to every other node (Baap of Dijkstra and Bellman Ford)
+=> TC => O(N * N * N)
+=> Can be used to detect negative cycle as well
+Algorithm:
+    Solved using Dynamic Programming
+    State: dp[i][j] = shortest distance to reach from i to j
+    Initialization: Same as Adjacency Matrix of Graph (Replace -1 with 1e9 (For {i, j} whose edges are not given))
+    Transition: dp[i][j] = min(dp[i][j], dp[i][k] + dp[k][j]) (To Reach from i to j, we go from i to k then k to j {for all k = 1 to N})
+*/
+void shortest_distance(vector<vector<int>>&dp){
+    int n = dp.size();
+    // Initialize dp array from adjacency matrix
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (dp[i][j] == -1) dp[i][j] = 1e9;
+        }
+    }
+    // Compute Shortest distance for dp[i][j] using Dynamic Programming
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    dp[i][j] = min(dp[i][j], dp[i][k] + dp[k][j]);
+                }
+            } 
+    }
+    // If distance is 1e9, path does not exist
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (dp[i][j] == 1e9) dp[i][j] = -1;
+        }
+    }
+    // Check Presence of Negative Cycle
+    for (int i = 0; i < n; i++) {
+        if (dp[i][i] < 0) cout << "Negative Cycle is There\n";
+    }
+}
+
+/*
+Minimum Spanning Tree (MST):
+=> It is for a graph, out of all possible Spanning Trees, the one having minimum sum of edge weights
+=> Can be found using:
+    Prims Algorithm of MST
+    Kruskal Algorith (Disjoint Set)
+Spanning Tree:
+    A tree in with N nodes and N - 1 edges, and all nodes are reachable from each other
 */
 
 /*
-FLOYD MARSHALL ALGORITHM
+Prim's Algorithm (Minimum Spanning Tree):
+Intution:
+    We solve this problem using a GREEDY Approach
+    Initially push 0 into the priority queue (Since At least one edge will be connected to 0 in the MST)
+    Now we Push all its adjNodes 
+    But everytime we greedily pick out the smallest weight nodes from the MIN-HEAP (Thus we find MST)
+    We maintain a visited array and make nodes visited the first time they are picked out of the heap (Then ignore them afterwards)
+    TC => O(E * log(E))
+*/
+int spanningTree(int V, vector<vector<int>> adj[]) {
+    // Create a Min-Heap to store {weight, node} (If MST was also asked, store {weight, {node, parent}})
+    priority_queue <pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    vector <int> vis(V, 0);
+    pq.push({ 0, 0 });
+    int sum = 0;
+    while (!pq.empty()) {
+        auto node = pq.top().second;
+        auto wt = pq.top().first;
+        pq.pop();
+        // If Visited, Continue. Else Take Value
+        if (vis[node]) continue;
+        vis[node] = 1;
+        sum += wt;
+        // Check adjacent Neighbours
+        for (auto it : adj[node]) {
+            auto adjNode = it[0];
+            auto edgeW = it[1];
+            if (!vis[adjNode]) {
+                pq.push({ edgeW, adjNode });
+            }
+        }
+    }
+    return sum;
+}
+
+/*
+BRIDGES IN A GRAPH:
+It is an Edge, on removal of which, the graph breaks into 2 or more components.
 */
 
 ll M = 1e9 + 7;
