@@ -22,37 +22,38 @@ using namespace std;
 const int hashp1 = 31;
 const int hashp2 = 53;
 const int hashM = 1e9 + 9;
-int power[100001];
+const int N = 1e5;
+ll power[N];
 
-void computePrefixHash (string &str, int n, int prefixHash[], int power[]) {
+void computePrefixHash (string &str, ll n, ll prefixHash[], ll power[]) {
     prefixHash[0] = 0;
     prefixHash[1] = str[0];
     for (int i = 2; i <= n; i++) {
-        prefixHash[i] = (prefixHash[i - 1] % hashM + (str[i - 1] % hashM * power[i - 1] % hashM) % hashM) % hashM;
+        prefixHash[i] = (prefixHash[i - 1] % hashM + (str[i - 1] % hashM * 1LL * power[i - 1] % hashM) % hashM) % hashM;
     }
     return;
 }
 
-void computeSuffixHash (string &str, int n, int suffixHash[], int power[]) {
+void computeSuffixHash (string &str, ll n, ll suffixHash[], ll power[]) {
     suffixHash[0] = 0;
     suffixHash[1] = str[n - 1];
     for (int i = n - 2, j = 2; i >= 0 && j <= n; i--, j++) {
-        suffixHash[j] = (suffixHash[j - 1] % hashM + (str[i] % hashM * power[j - 1] % hashM) % hashM) % hashM;
+        suffixHash[j] = (suffixHash[j - 1] % hashM + (str[i] % hashM * 1LL * power[j - 1] % hashM) % hashM) % hashM;
     }
     return;
 }
 
-int computeHash (int n, int prefixHash[], int power[], int start, int end) {
+int computeHash (ll n, ll prefixHash[], ll power[], ll start, ll end) {
     ll val = (prefixHash[end] - prefixHash[start - 1] + hashM) % hashM;
-    val = (val * (power[n - start])) % hashM;
+    val = (val * 1LL * (power[n - start])) % hashM;
     return val;
 }
 
-int computeRevHash (int n, int suffixHash[], int power[], int end, int start) {
+int computeRevHash (ll n, ll suffixHash[], ll power[], ll end, ll start) {
     start = n + 1 - start;
     end = n + 1 - end;
     ll val = (suffixHash[end] - suffixHash[start - 1] + hashM) % hashM;
-    val = (val * power[n - start]) % hashM;
+    val = (val * 1ll * power[n - start]) % hashM;
     return val;
 }
 
@@ -120,10 +121,55 @@ int binpow (int a, int b, int M) {
     return res;
 }
 
+void dfs(int row, int col, vector <vector <int>> &v, vector <vector <int>> &vis, ll &curr) {
+    vis[row][col] = 1;
+    int dr[] = {-1, 0, 1, 0};
+    int dc[] = {0, 1, 0, -1};
+    int adj = 0;
+    for (int i = 0; i < 4; i++) {
+        int nr = row + dr[i];
+        int nc = col + dc[i];
+        if (nr <= 3 && nr >= 0 && nc <= 2 && nc >= 0 && !vis[nr][nc]) {
+            if (nr == 3) {
+                if (nc == 1 || nc == 2) {
+                    continue;
+                }
+                else {
+                    adj++;
+                }
+            }
+            else {
+                adj++;
+            }
+            dfs(nr, nc, v, vis, curr);
+        }
+    }
+    cout << curr << " " << adj << "\n";
+    if (adj) curr = (curr * adj) % (int)(1e9 + 7);
+}
+
 int main () {
     // Precomputation of Powers for Max Possible String Size to be done Before Handling Test Cases
     power[0] = 1;
-    for (int i = 1; i <= 100000; i++) {
+    for (int i = 1; i <= 1500; i++) {
         power[i] = power[i - 1] * hashp1 % hashM;
     }
+    int MOD = 1e9 + 7;
+    vector <vector <int>> v;
+    v.push_back({ 9, 8, 7 });
+    v.push_back({ 6, 5, 4 });
+    v.push_back({ 3, 2, 1 });
+    v.push_back({ 0 });
+    ll x = 0;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (i == 3 && j == 1) continue;
+            if (i == 3 && j == 2) continue;
+            ll curr = 1;
+            vector <vector <int>> vis(4, vector <int> (3, 0));
+            dfs(i, j, v, vis, curr);
+            x = (x + curr) % MOD;
+        }
+    }
+    cout << x << "\n";
 }

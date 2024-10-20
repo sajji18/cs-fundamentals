@@ -66,37 +66,38 @@ Collisions:
 const int hashp1 = 31;
 const int hashp2 = 53;
 const int hashM = 1e9 + 9;
-int power[100001];
+const int N = 1e5;
+ll power[N];
 
-void computePrefixHash (string &str, int n, int prefixHash[], int power[]) {
+void computePrefixHash (string &str, ll n, ll prefixHash[], ll power[]) {
     prefixHash[0] = 0;
     prefixHash[1] = str[0];
     for (int i = 2; i <= n; i++) {
-        prefixHash[i] = (prefixHash[i - 1] % hashM + (str[i - 1] % hashM * power[i - 1] % hashM) % hashM) % hashM;
+        prefixHash[i] = (prefixHash[i - 1] % hashM + (str[i - 1] % hashM * 1LL * power[i - 1] % hashM) % hashM) % hashM;
     }
     return;
 }
 
-void computeSuffixHash (string &str, int n, int suffixHash[], int power[]) {
+void computeSuffixHash (string &str, ll n, ll suffixHash[], ll power[]) {
     suffixHash[0] = 0;
     suffixHash[1] = str[n - 1];
     for (int i = n - 2, j = 2; i >= 0 && j <= n; i--, j++) {
-        suffixHash[j] = (suffixHash[j - 1] % hashM + (str[i] % hashM * power[j - 1] % hashM) % hashM) % hashM;
+        suffixHash[j] = (suffixHash[j - 1] % hashM + (str[i] % hashM * 1LL * power[j - 1] % hashM) % hashM) % hashM;
     }
     return;
 }
 
-int computeHash (int n, int prefixHash[], int power[], int start, int end) {
+int computeHash (ll n, ll prefixHash[], ll power[], ll start, ll end) {
     ll val = (prefixHash[end] - prefixHash[start - 1] + hashM) % hashM;
-    val = (val * (power[n - start])) % hashM;
+    val = (val * 1LL * (power[n - start])) % hashM;
     return val;
 }
 
-int computeRevHash (int n, int suffixHash[], int power[], int end, int start) {
+int computeRevHash (ll n, ll suffixHash[], ll power[], ll end, ll start) {
     start = n + 1 - start;
     end = n + 1 - end;
     ll val = (suffixHash[end] - suffixHash[start - 1] + hashM) % hashM;
-    val = (val * power[n - start]) % hashM;
+    val = (val * 1ll * power[n - start]) % hashM;
     return val;
 }
 
@@ -113,7 +114,7 @@ Solution :
 */
 vector <vector <int>> group_identical_strings (vector <string> &s) {
     int n = s.size();
-    int prefixHash[n + 1];
+    ll prefixHash[n + 1];
     vector <pair<long long, int>> hashes(n);
     for (int i = 0; i < n; i++) {
         int m = s[i].length();
@@ -159,7 +160,7 @@ Therefore we can compare them directly, since all are multiplied with the same c
 */
 int count_unique_substrings(string &s) {
     int n = s.size();
-    int prefixHash[n + 1];
+    ll prefixHash[n + 1];
     computePrefixHash(s, n, prefixHash, power);
     int count = 0;
     for (int l = 1; l <= n; l++) {

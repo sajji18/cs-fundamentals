@@ -198,8 +198,8 @@ int findHeight (TreeNode* root, int diameter) {
 // Maximum Path Sum in a Binary Tree
 int maxPathSum (TreeNode* root, int &maxSum) {
     if (root == nullptr) return 0;
-    int leftMaxPathSum = maxPathSum(root -> left, maxSum);
-    int rightMaxPathSum = maxPathSum(root -> right, maxSum);
+    int leftMaxPathSum = max(0, maxPathSum(root -> left, maxSum));
+    int rightMaxPathSum = max(0, maxPathSum(root -> right, maxSum));
     maxSum = max(maxSum, leftMaxPathSum + rightMaxPathSum + root -> data);
     return max(leftMaxPathSum, rightMaxPathSum) + root -> data;
 }
